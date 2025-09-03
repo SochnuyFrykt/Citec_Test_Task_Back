@@ -1,0 +1,7 @@
+﻿services:
+  citec_test_task_back:
+    image: citec_test_task_back
+    build:
+      context: .
+      dockerfile: Citec_Test_Task_Back/Dockerfile
+
