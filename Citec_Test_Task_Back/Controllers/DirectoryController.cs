@@ -44,6 +44,13 @@ public class DirectoryController : ControllerBase
 
         Console.WriteLine($"Файлов в памяти {unzippedFileContents.Count}");
 
+        return await ParseFile(unzippedFileContents, token);
+    }
+
+    private async Task<IActionResult> ParseFile(
+        Dictionary<string, byte[]> unzippedFileContents,
+        CancellationToken token)
+    {
         var objLevelsFile = unzippedFileContents
             .FirstOrDefault(l => l.Key.Contains("AS_OBJECT_LEVELS"));
 
@@ -53,18 +60,25 @@ public class DirectoryController : ControllerBase
         var allAddressObjects = new List<AddressObject>();
         var addressObjectEntries = unzippedFileContents
             .Where(kvp => kvp.Key.Contains("AS_ADDR_OBJ", StringComparison.InvariantCultureIgnoreCase));
-        
+
         foreach (var entry in addressObjectEntries)
         {
-            var parsedObjects = await ParseAddressObjects(new MemoryStream(entry.Value), token);
+            var parsedObjects = await ParseAddressObjects(
+                new MemoryStream(entry.Value), token
+            );
+            
             allAddressObjects.AddRange(parsedObjects);
         }
-        
-        return Ok(unzippedFileContents);
+
+        return Ok(new
+        {
+            levels,
+            allAddressObjects
+        });
     }
 
     private async Task<Dictionary<int, string>> ParseObjectLevelsFile(
-        MemoryStream fileContent, 
+        MemoryStream fileContent,
         CancellationToken token)
     {
         var doc = await XDocument.LoadAsync(fileContent, LoadOptions.None, token);
@@ -75,9 +89,9 @@ public class DirectoryController : ControllerBase
                 el => el.Attribute("NAME").Value
             );
     }
-    
+
     private async Task<IEnumerable<AddressObject>> ParseAddressObjects(
-        MemoryStream fileContent, 
+        MemoryStream fileContent,
         CancellationToken token)
     {
         var doc = await XDocument.LoadAsync(fileContent, LoadOptions.None, token);
@@ -89,11 +103,18 @@ public class DirectoryController : ControllerBase
                 Name: el.Attribute("NAME").Value,
                 TypeName: el.Attribute("TYPENAME").Value
             ));
-            //.Where(obj => obj.Level < 8);
-                
+
         return objects;
     }
 }
+
 internal record AddressObject(Guid Id, int Level, string Name, string TypeName);
-public record ReportLevel { public int Level { get; set; } public string LevelName { get; set; } public List<ReportObject> Objects { get; set; } }
+
+public record ReportLevel
+{
+    public int Level { get; set; }
+    public string LevelName { get; set; }
+    public List<ReportObject> Objects { get; set; }
+}
+
 public record ReportObject(string Type, string Name);
