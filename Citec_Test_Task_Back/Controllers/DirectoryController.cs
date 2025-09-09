@@ -116,11 +116,4 @@ public class DirectoryController : ControllerBase
 
 internal record AddressObject(Guid Id, int Level, string Name, string TypeName);
 
-public record ReportLevel
-{
-    public int Level { get; set; }
-    public string LevelName { get; set; }
-    public List<ReportObject> Objects { get; set; }
-}
-
 public record ReportObject(string Type, string Name);
