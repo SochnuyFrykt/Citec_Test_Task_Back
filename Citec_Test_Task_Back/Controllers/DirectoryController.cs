@@ -16,7 +16,7 @@ public class DirectoryController : ControllerBase
     }
 
     [HttpPost("unzip_file")]
-    public async Task<IActionResult> UnzipArchive(string urlPathFile, CancellationToken token)
+    public async Task<IActionResult> UnzipArchive([FromBody] string urlPathFile, CancellationToken token)
     {
         var unzippedFileContents = new Dictionary<string, byte[]>();
 
@@ -66,7 +66,7 @@ public class DirectoryController : ControllerBase
             var parsedObjects = await ParseAddressObjects(
                 new MemoryStream(entry.Value), token
             );
-            
+
             allAddressObjects.AddRange(parsedObjects);
         }
 
@@ -83,7 +83,13 @@ public class DirectoryController : ControllerBase
     {
         var doc = await XDocument.LoadAsync(fileContent, LoadOptions.None, token);
         return doc.Descendants("OBJECTLEVEL")
-            .Where(el => el.Attribute("ISACTIVE")?.Value == "true")
+            .Where(el => el.Attribute("ISACTIVE")?.Value == "true"
+                         && el.Attribute("LEVEL")?.Value != "9"
+                         && el.Attribute("LEVEL")?.Value != "10"
+                         && el.Attribute("LEVEL")?.Value != "11"
+                         && el.Attribute("LEVEL")?.Value != "12"
+                         && el.Attribute("LEVEL")?.Value != "17"
+            )
             .ToDictionary(
                 el => int.Parse(el.Attribute("LEVEL").Value),
                 el => el.Attribute("NAME").Value
