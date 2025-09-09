@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Text.Json;
 using Citec_Test_Task_Back.DataAccess;
 using Microsoft.AspNetCore.Mvc;
@@ -32,14 +31,16 @@ public class DownloadFilesController : ControllerBase
 
             var data = JsonSerializer.Deserialize<ArchiveData>(jsonString, opt);
 
-            //var unzipFile = await DownloadAndUnzipFile(data.GarXMLDeltaURL, token);
-
             return Ok(data);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return NotFound($"{e}");
+            return StatusCode(500, new
+            {
+                messege = "Ошибка сервера",
+                error = e
+            });
         }
     }
 }
